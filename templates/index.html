@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keyword Suggestion Tool</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="text-center mb-4">Keyword Suggestion Tool</h1>
+    <form id="keywordForm" class="mb-4">
+      <div class="mb-3">
+        <label for="keyword" class="form-label">Enter a Keyword:</label>
+        <input type="text" id="keyword" name="keyword" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Get Suggestions</button>
+    </form>
+
+    <div id="results" style="display: none;">
+      <div class="d-flex justify-content-center mb-3">
+        <a id="downloadLink" href="#" class="btn btn-success">Download Keywords as CSV</a>
+      </div>
+      <div id="suggestions"></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('keywordForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const keywordInput = document.getElementById('keyword');
+      const keyword = keywordInput.value.trim();
+      const resultsDiv = document.getElementById('results');
+      const suggestionsDiv = document.getElementById('suggestions');
+      const downloadLink = document.getElementById('downloadLink');
+
+      if (!keyword) {
+        suggestionsDiv.innerHTML = '<p class="text-danger">Please enter a keyword.</p>';
+        resultsDiv.style.display = 'none';
+        return;
+      }
+
+      suggestionsDiv.innerHTML = '<p>Loading suggestions...</p>';
+      resultsDiv.style.display = 'block';
+
+      try {
+        const response = await fetch('/api/keywords', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ keyword }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          const suggestions = data.suggestions;
+          const csvPath = data.csv_path;
+
+          downloadLink.href = `/download?file=${csvPath}`;
+
+          suggestionsDiv.innerHTML = `<h3>Suggestions for "${data.keyword}":</h3><ul class="list-group">` +
+            suggestions.map((item) => {
+              const color = getColor(item.popularity);
+              return `<li class="list-group-item" style="background-color: ${color}; color: white;">
+                        ${item.keyword} - ${item.popularity}%
+                      </li>`;
+            }).join('') +
+            `</ul>`;
+        } else {
+          suggestionsDiv.innerHTML = `<p class="text-danger">${data.error}</p>`;
+        }
+      } catch (error) {
+        suggestionsDiv.innerHTML = `<p class="text-danger">Error: ${error.message}</p>`;
+      }
+    });
+
+    // Function to calculate color based on popularity
+    function getColor(popularity) {
+      const red = Math.min(255, Math.floor(255 - (popularity * 2.55)));
+      const green = Math.min(255, Math.floor(popularity * 2.55));
+      return `rgb(${red}, ${green}, 0)`;
+    }
+  </script>
+</body>
+</html>

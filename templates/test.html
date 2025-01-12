@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keyword Suggestion API Test</title>
+</head>
+<body>
+  <h1>Test the Keyword Suggestion API</h1>
+  <form id="keywordForm">
+    <label for="keyword">Keyword:</label>
+    <input type="text" id="keyword" name="keyword" required>
+    <button type="submit">Submit</button>
+  </form>
+  <pre id="response"></pre>
+
+  <script>
+    document.getElementById('keywordForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const keyword = document.getElementById('keyword').value;
+
+      const response = await fetch('http://127.0.0.1:5000/api/keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword }),
+      });
+
+      const result = await response.json();
+      document.getElementById('response').textContent = JSON.stringify(result, null, 2);
+    });
+  </script>
+</body>
+</html>
